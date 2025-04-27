@@ -28,19 +28,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.set('view engine', 'ejs');
 
 // Global Middlewares
-app.use(
-  cors({
-    origin: 'https://blauda-frontend-z4b6.vercel.app', // your frontend dev server
-    credentials: true,
-  })
-);
-app.options(
-  '*',
-  cors({
-    origin: 'https://blauda-frontend-z4b6.vercel.app',
-    credentials: true,
-  })
-);
+app.use(cors());
+app.options('*', cors());
 
 // Set security HTTP headers
 app.use(helmet());
