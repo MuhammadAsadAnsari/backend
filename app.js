@@ -28,16 +28,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.set('view engine', 'ejs');
 
 // Global Middlewares
-
-const corsOptions = {
-  origin: 'https://blauda-frontend-z4b6.vercel.app', // Change this to your frontend URL (e.g., Vite default)
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specific methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow necessary headers
-  credentials: true, // Allow cookies if needed
-};
-
-app.use(cors(corsOptions)); // Set explicit CORS options
-
+app.use(cors());
 app.options('*', cors());
 
 // Set security HTTP headers
