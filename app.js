@@ -31,7 +31,7 @@ app.set('view engine', 'ejs');
 const allowedOrigins = [
   'http://localhost:3000', // Local development
   'http://localhost:3001', // Optional second local port
-  'https://blauda-frontend-yygh.vercel.app', // Vercel frontend
+  'https://blauda-frontend-z4b6.vercel.app', // Vercel frontend
   'https://amtrading.jp', // Main domain
   'https://www.amtrading.jp', // Main domain with www
 ];
