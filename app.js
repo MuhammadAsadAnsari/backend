@@ -17,33 +17,40 @@ const listingRouter = require('./routes/listingRoutes');
 
 const app = express();
 
-// Set trust proxy
+// Enable trust proxy (important for Railway or any reverse proxy)
 app.enable('trust proxy');
 
-// Serve static files
+// Serve static and uploaded files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// View engine setup (using EJS)
+// View engine
 app.set('view engine', 'ejs');
 
-// Global Middlewares
-app.use(cors());
-app.options('*', cors());
+// ✅ CORS config for frontend
+app.use(cors({
+  origin: 'https://blauda-frontend-yygh.vercel.app',
+  credentials: true
+}));
 
-// Set security HTTP headers
+app.options('*', cors({
+  origin: 'https://blauda-frontend-yygh.vercel.app',
+  credentials: true
+}));
+
+// Security headers
 app.use(helmet());
 app.use(helmet.frameguard({ action: 'sameorigin' }));
 
-// Logging (development only)
+// Logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
 // Rate limiting
 const limiter = rateLimit({
-  max: 100, // adjust as needed
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  windowMs: 15 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
 });
 app.use('/api', limiter);
@@ -53,9 +60,8 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
 
-// Compression
+// Gzip compression
 app.use(compression());
-
 
 // Routes
 app.get('/', (req, res) => {
@@ -74,8 +80,7 @@ app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// Global error handling middleware
+// Global error handler
 app.use(globalErrorHandler);
 
-// Export app
 module.exports = app;
