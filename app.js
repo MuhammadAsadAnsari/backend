@@ -17,52 +17,33 @@ const listingRouter = require('./routes/listingRoutes');
 
 const app = express();
 
-// Enable trust proxy (important for Railway or any reverse proxy)
+// Set trust proxy
 app.enable('trust proxy');
 
-// Serve static and uploaded files
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// View engine
+// View engine setup (using EJS)
 app.set('view engine', 'ejs');
 
-// ✅ Correct CORS config
-const allowedOrigins = [
-  'http://localhost:3000', // Localhost (React dev server)
-  'http://localhost:3001', // (optional another local port)
-  'https://blauda-frontend-yygh.vercel.app', // Vercel frontend
-  'https://amtrading.jp', // Your domain
-  'https://www.amtrading.jp', // Your domain with www (optional)
-];
+// Global Middlewares
+app.use(cors());
+app.options('*', cors());
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Allow non-browser requests (e.g., Postman)
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-  })
-);
-
-// Security headers
+// Set security HTTP headers
 app.use(helmet());
 app.use(helmet.frameguard({ action: 'sameorigin' }));
 
-// Logging
+// Logging (development only)
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
 // Rate limiting
 const limiter = rateLimit({
-  max: 100,
-  windowMs: 15 * 60 * 1000,
+  max: 100, // adjust as needed
+  windowMs: 15 * 60 * 1000, // 15 minutes
   message: 'Too many requests from this IP, please try again in an hour!',
 });
 app.use('/api', limiter);
@@ -72,7 +53,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
 
-// Gzip compression
+// Compression
 app.use(compression());
 
 // Routes
@@ -92,7 +73,8 @@ app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// Global error handler
+// Global error handling middleware
 app.use(globalErrorHandler);
 
+// Export app
 module.exports = app;
