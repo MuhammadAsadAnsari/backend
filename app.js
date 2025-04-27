@@ -30,14 +30,14 @@ app.set('view engine', 'ejs');
 // Global Middlewares
 app.use(
   cors({
-    origin: 'http://localhost:5173', // your frontend dev server
+    origin: 'https://blauda-frontend-z4b6.vercel.app', // your frontend dev server
     credentials: true,
   })
 );
 app.options(
   '*',
   cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://blauda-frontend-z4b6.vercel.app',
     credentials: true,
   })
 );
