@@ -20,6 +20,17 @@ const app = express();
 // Trust proxy for Vercel and proxies
 app.enable('trust proxy');
 
+// Force HTTPS redirect (for production)
+app.use((req, res, next) => {
+  if (
+    req.headers['x-forwarded-proto'] !== 'https' &&
+    process.env.NODE_ENV === 'production'
+  ) {
+    return res.redirect('https://' + req.headers.host + req.url);
+  }
+  next();
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -29,28 +40,26 @@ app.set('view engine', 'ejs');
 
 // Correct CORS Setup
 const allowedOrigins = [
-  'http://localhost:3000', // Local development
-  'http://localhost:3001', // Optional second local port
-  'https://blauda-frontend-z4b6.vercel.app', // Vercel frontend
-  'https://amtrading.jp', // Main domain
-  'https://www.amtrading.jp', // Main domain with www
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://blauda-frontend-z4b6.vercel.app',
+  'https://amtrading.jp',
+  'https://www.amtrading.jp',
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Allow non-browser requests (e.g., Postman, server-side)
+      if (!origin) return callback(null, true); // Allow non-browser requests
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       } else {
-        return callback(new Error('Not allowed by CORS'));
+        return callback(null, false); // <--- IMPORTANT FIX: soft reject, no throw
       }
     },
     credentials: true,
   })
 );
-
-app.options('*', cors());
 
 // Security headers
 app.use(helmet());
@@ -63,8 +72,8 @@ if (process.env.NODE_ENV === 'development') {
 
 // Rate limiting
 const limiter = rateLimit({
-  max: 100, // Adjust limit as needed
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  windowMs: 15 * 60 * 1000,
   message: 'Too many requests from this IP, please try again later!',
 });
 app.use('/api', limiter);
