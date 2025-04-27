@@ -17,15 +17,12 @@ const listingRouter = require('./routes/listingRoutes');
 
 const app = express();
 
-// Trust proxy for Vercel and proxies
+// Trust proxy (for Vercel)
 app.enable('trust proxy');
 
-// Force HTTPS redirect (for production)
+// Force HTTPS Redirect (Vercel Production)
 app.use((req, res, next) => {
-  if (
-    req.headers['x-forwarded-proto'] !== 'https' &&
-    process.env.NODE_ENV === 'production'
-  ) {
+  if (process.env.VERCEL && req.headers['x-forwarded-proto'] !== 'https') {
     return res.redirect('https://' + req.headers.host + req.url);
   }
   next();
@@ -35,37 +32,31 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// View engine setup (EJS)
+// View engine setup
 app.set('view engine', 'ejs');
 
-// Correct CORS Setup
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'https://blauda-frontend-z4b6.vercel.app',
-  'https://amtrading.jp',
-  'https://www.amtrading.jp',
-];
-
+// CORS Setup — Only allow specific domain, no array
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Allow non-browser requests
-      if (allowedOrigins.includes(origin)) {
+      if (!origin) return callback(null, true); // Allow Postman / server-side
+      if (origin === 'https://blauda-frontend-z4b6.vercel.app') {
         return callback(null, true);
       } else {
-        return callback(null, false); // <--- IMPORTANT FIX: soft reject, no throw
+        return callback(new Error('CORS policy: This origin is not allowed.'));
       }
     },
     credentials: true,
   })
 );
 
+app.options('*', cors());
+
 // Security headers
 app.use(helmet());
 app.use(helmet.frameguard({ action: 'sameorigin' }));
 
-// Logging in dev only
+// Logging (dev only)
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
@@ -73,7 +64,7 @@ if (process.env.NODE_ENV === 'development') {
 // Rate limiting
 const limiter = rateLimit({
   max: 100,
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
   message: 'Too many requests from this IP, please try again later!',
 });
 app.use('/api', limiter);
@@ -98,13 +89,13 @@ app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/contact-us', contactUsRouter);
 app.use('/api/v1/listing', listingRouter);
 
-// Handle unhandled routes
+// 404 Handler
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// Global error handling middleware
+// Global error handler
 app.use(globalErrorHandler);
 
-// Export app (for Vercel + local)
+// Export app
 module.exports = app;
