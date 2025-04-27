@@ -17,55 +17,34 @@ const listingRouter = require('./routes/listingRoutes');
 
 const app = express();
 
-// Trust proxy (for Vercel)
+// Set trust proxy
 app.enable('trust proxy');
-
-// Force HTTPS Redirect (Vercel Production)
-app.use((req, res, next) => {
-  if (process.env.VERCEL && req.headers['x-forwarded-proto'] !== 'https') {
-    return res.redirect('https://' + req.headers.host + req.url);
-  }
-  next();
-});
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// View engine setup
+// View engine setup (using EJS)
 app.set('view engine', 'ejs');
 
-// CORS Setup — Only allow specific domain, no array
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Allow Postman / server-side
-      if (origin === 'https://blauda-frontend-z4b6.vercel.app') {
-        return callback(null, true);
-      } else {
-        return callback(new Error('CORS policy: This origin is not allowed.'));
-      }
-    },
-    credentials: true,
-  })
-);
-
+// Global Middlewares
+app.use(cors());
 app.options('*', cors());
 
-// Security headers
+// Set security HTTP headers
 app.use(helmet());
 app.use(helmet.frameguard({ action: 'sameorigin' }));
 
-// Logging (dev only)
+// Logging (development only)
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
 // Rate limiting
 const limiter = rateLimit({
-  max: 100,
+  max: 100, // adjust as needed
   windowMs: 15 * 60 * 1000, // 15 minutes
-  message: 'Too many requests from this IP, please try again later!',
+  message: 'Too many requests from this IP, please try again in an hour!',
 });
 app.use('/api', limiter);
 
@@ -89,12 +68,12 @@ app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/contact-us', contactUsRouter);
 app.use('/api/v1/listing', listingRouter);
 
-// 404 Handler
+// 404 handler
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// Global error handler
+// Global error handling middleware
 app.use(globalErrorHandler);
 
 // Export app
