@@ -28,8 +28,19 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.set('view engine', 'ejs');
 
 // Global Middlewares
-app.use(cors());
-app.options('*', cors());
+app.use(
+  cors({
+    origin: 'http://localhost:5173', // your frontend dev server
+    credentials: true,
+  })
+);
+app.options(
+  '*',
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  })
+);
 
 // Set security HTTP headers
 app.use(helmet());
