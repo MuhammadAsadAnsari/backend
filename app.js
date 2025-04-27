@@ -27,16 +27,28 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // View engine
 app.set('view engine', 'ejs');
 
-// ✅ CORS config for frontend
-app.use(cors({
-  origin: 'amtrading.jp',
-  credentials: true
-}));
+// ✅ Correct CORS config
+const allowedOrigins = [
+  'http://localhost:3000', // Localhost (React dev server)
+  'http://localhost:3001', // (optional another local port)
+  'https://blauda-frontend-yygh.vercel.app', // Vercel frontend
+  'https://amtrading.jp', // Your domain
+  'https://www.amtrading.jp', // Your domain with www (optional)
+];
 
-app.options('*', cors({
-  origin: 'https://blauda-frontend-yygh.vercel.app',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // Allow non-browser requests (e.g., Postman)
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Security headers
 app.use(helmet());
