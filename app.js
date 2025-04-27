@@ -29,7 +29,7 @@ app.set('view engine', 'ejs');
 
 // ✅ CORS config for frontend
 app.use(cors({
-  origin: 'https://blauda-frontend-yygh.vercel.app',
+  origin: 'amtrading.jp',
   credentials: true
 }));
 
