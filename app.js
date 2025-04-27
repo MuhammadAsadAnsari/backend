@@ -17,34 +17,55 @@ const listingRouter = require('./routes/listingRoutes');
 
 const app = express();
 
-// Set trust proxy
+// Trust proxy for Vercel and proxies
 app.enable('trust proxy');
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// View engine setup (using EJS)
+// View engine setup (EJS)
 app.set('view engine', 'ejs');
 
-// Global Middlewares
-app.use(cors());
+// Correct CORS Setup
+const allowedOrigins = [
+  'http://localhost:3000', // Local development
+  'http://localhost:3001', // Optional second local port
+  'https://blauda-frontend-yygh.vercel.app', // Vercel frontend
+  'https://amtrading.jp', // Main domain
+  'https://www.amtrading.jp', // Main domain with www
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // Allow non-browser requests (e.g., Postman, server-side)
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.options('*', cors());
 
-// Set security HTTP headers
+// Security headers
 app.use(helmet());
 app.use(helmet.frameguard({ action: 'sameorigin' }));
 
-// Logging (development only)
+// Logging in dev only
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
 // Rate limiting
 const limiter = rateLimit({
-  max: 100, // adjust as needed
+  max: 100, // Adjust limit as needed
   windowMs: 15 * 60 * 1000, // 15 minutes
-  message: 'Too many requests from this IP, please try again in an hour!',
+  message: 'Too many requests from this IP, please try again later!',
 });
 app.use('/api', limiter);
 
@@ -68,7 +89,7 @@ app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/contact-us', contactUsRouter);
 app.use('/api/v1/listing', listingRouter);
 
-// 404 handler
+// Handle unhandled routes
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
@@ -76,5 +97,5 @@ app.all('*', (req, res, next) => {
 // Global error handling middleware
 app.use(globalErrorHandler);
 
-// Export app
+// Export app (for Vercel + local)
 module.exports = app;
