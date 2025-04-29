@@ -166,7 +166,9 @@ const getAllListings = catchAsync(async (req, res, next) => {
 
   if (!listings) return next(new AppError('No listings found', 400));
 
-  return res.status(200).json({ success: true, data: listings });
+  return res
+    .status(200)
+    .json({ success: true, data: listings[0], totalRecords: listings[1] });
 });
 
 const getListingDetails = catchAsync(async (req, res, next) => {
