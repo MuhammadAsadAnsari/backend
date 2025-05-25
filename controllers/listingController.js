@@ -3,7 +3,7 @@ const AppError = require('../utils/appError');
 const { AppDataSource } = require('../db');
 const { Listing } = require('../models/listingEntity');
 const { deleteImage } = require('../utils/s3');
-const { ILike } = require('typeorm');
+const { ILike ,Not} = require('typeorm');
 const getListingRepo = () => {
   return AppDataSource.getRepository(Listing);
 };
